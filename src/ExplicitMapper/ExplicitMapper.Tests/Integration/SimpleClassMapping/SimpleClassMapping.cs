@@ -11,7 +11,7 @@ namespace ExplicitMapper.Tests.Integration.SimpleClassMapping
         public void FieldsMapped()
         {
             MappingConfiguration.Add<XtoYConfiguration>();
-            Mapper.Build();
+            MappingConfiguration.Build();
 
             var x = new X()
             {
