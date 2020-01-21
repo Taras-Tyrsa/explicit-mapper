@@ -19,5 +19,13 @@ namespace ExplicitMapper
             _rawMappings.Add(mapping);
             return mapping;
         }
+
+        public static void Add<T>()
+            where T: MappingConfiguration, new()
+        {
+            new T();
+        }
+
+
     }
 }
