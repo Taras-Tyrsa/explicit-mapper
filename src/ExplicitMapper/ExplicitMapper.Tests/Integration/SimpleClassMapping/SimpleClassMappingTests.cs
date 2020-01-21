@@ -5,7 +5,7 @@ using Xunit;
 namespace ExplicitMapper.Tests.Integration.SimpleClassMapping
 {
     [Collection("Integration tests")]
-    public class SimpleClassMapping : IDisposable
+    public class SimpleClassMappingTests : IDisposable
     {
         [Fact]
         public void FieldsMapped()
@@ -27,7 +27,7 @@ namespace ExplicitMapper.Tests.Integration.SimpleClassMapping
 
         public void Dispose()
         {
-            
+            MappingConfiguration.Clear();
         }
     }
 }

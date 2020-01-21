@@ -7,14 +7,19 @@ namespace ExplicitMapper
         public static TDest Map<TDest>(object source)
             where TDest : new()
         {
-            if (!MappingConfiguration.ProjectionExpressions.TryGetValue((source.GetType(), typeof(TDest)), out var func))
+            if (MappingConfiguration.MapExpressions == null)
             {
                 throw new Exception();
             }
 
-            var dest = func.DynamicInvoke(source);
+            if (!MappingConfiguration.MapExpressions.TryGetValue((source.GetType(), typeof(TDest)), out var func))
+            {
+                throw new Exception();
+            }
 
-            return (TDest)dest;
+            var dest = new TDest();
+            func.DynamicInvoke(source, dest);
+            return dest;
         }
     }
 }

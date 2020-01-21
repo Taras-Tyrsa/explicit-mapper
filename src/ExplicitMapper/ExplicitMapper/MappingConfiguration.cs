@@ -20,6 +20,11 @@ namespace ExplicitMapper
 
         protected RawMapping<TSource, TDest> CreateMap<TSource, TDest>()
         {
+            if (_rawMappings == null)
+            {
+                _rawMappings = new List<RawMapping>();
+            }
+
             var mapping = new RawMapping<TSource, TDest>();
             _rawMappings.Add(mapping);
             return mapping;
@@ -34,18 +39,29 @@ namespace ExplicitMapper
         public static void Build()
         {
             _projectionExpressions = new Dictionary<(Type source, Type dest), Delegate>(_rawMappings.Count);
+            _mapExpressions = new Dictionary<(Type source, Type dest), Delegate>(_rawMappings.Count);
 
             foreach (var mapping in _rawMappings)
             {
-                var sourceParam = Expression.Parameter(mapping.SourceType, "x");
+                var sourceParam = Expression.Parameter(mapping.SourceType, "source");
+                var destParam = Expression.Parameter(mapping.DestinationType, "dest");
 
-                var mappingExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestinationType, sourceParam, mapping.Expressions);
+                var projectionExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestinationType, sourceParam, mapping.Expressions);
+                var projectionLambda = Expression.Lambda(projectionExpression, sourceParam);
+                _projectionExpressions.Add((mapping.SourceType, mapping.DestinationType), projectionLambda.Compile());
 
-                var lambda = Expression.Lambda(mappingExpression, sourceParam);
-
-                _projectionExpressions.Add((mapping.SourceType, mapping.DestinationType), lambda.Compile());
+                var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mapping.Expressions);
+                var mapLambda = Expression.Lambda(mapExpression, sourceParam, destParam);
+                _mapExpressions.Add((mapping.SourceType, mapping.DestinationType), mapLambda.Compile());
             }
 
+            _rawMappings = null;
+        }
+
+        public static void Clear()
+        {
+            _projectionExpressions = null;
+            _mapExpressions = null;
             _rawMappings = null;
         }
     }
