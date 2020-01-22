@@ -1,4 +1,4 @@
-﻿namespace ExplicitMapper.Tests.Integration.SimpleClassMapping
+﻿namespace ExplicitMapper.Tests.Integration.SimpleClassMapping.StandardConfiguration
 {
     class XtoYStandardConfiguration : MappingConfiguration
     {
