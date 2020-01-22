@@ -30,6 +30,24 @@ namespace ExplicitMapper
             return mapping;
         }
 
+        protected void CreateMap<TSource, TDest>(Expression<Func<TSource, TDest>> objectInitializer)
+            where TSource: new()
+        {
+            if (objectInitializer == null)
+            {
+                throw new ArgumentNullException(nameof(objectInitializer));
+            }
+
+            if (_rawMappings == null)
+            {
+                _rawMappings = new List<RawMapping>();
+            }
+
+            var mapping = ObjectInitializerParser.Parse(objectInitializer);
+
+            _rawMappings.Add(mapping);
+        }
+
         public static void Add<T>()
             where T: MappingConfiguration, new()
         {
@@ -44,15 +62,15 @@ namespace ExplicitMapper
             foreach (var mapping in _rawMappings)
             {
                 var sourceParam = Expression.Parameter(mapping.SourceType, "source");
-                var destParam = Expression.Parameter(mapping.DestinationType, "dest");
+                var destParam = Expression.Parameter(mapping.DestType, "dest");
 
-                var projectionExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestinationType, sourceParam, mapping.Expressions);
+                var projectionExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestType, sourceParam, mapping.Expressions);
                 var projectionLambda = Expression.Lambda(projectionExpression, sourceParam);
-                _projectionExpressions.Add((mapping.SourceType, mapping.DestinationType), projectionLambda.Compile());
+                _projectionExpressions.Add((mapping.SourceType, mapping.DestType), projectionLambda.Compile());
 
                 var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mapping.Expressions);
                 var mapLambda = Expression.Lambda(mapExpression, sourceParam, destParam);
-                _mapExpressions.Add((mapping.SourceType, mapping.DestinationType), mapLambda.Compile());
+                _mapExpressions.Add((mapping.SourceType, mapping.DestType), mapLambda.Compile());
             }
 
             _rawMappings = null;

@@ -5,16 +5,26 @@ using System.Text;
 
 namespace ExplicitMapper
 {
-    public abstract class RawMapping
+    public class RawMapping
     {
         private readonly List<(Expression source, Expression dest)> _expressions =
             new List<(Expression source, Expression dest)>();
 
-        internal abstract Type SourceType { get; }
-        internal abstract Type DestinationType { get; }
+        internal virtual Type SourceType { get; }
+        internal virtual Type DestType { get; }
         internal IReadOnlyList<(Expression source, Expression dest)> Expressions => _expressions;
 
-        protected void AddExpressionPair(Expression source, Expression dest)
+        internal RawMapping()
+        {
+        }
+
+        internal RawMapping(Type sourceType, Type destType)
+        {
+            SourceType = sourceType;
+            DestType = destType;
+        }
+
+        internal void AddExpressionPair(Expression source, Expression dest)
         {
             _expressions.Add((source, dest));
         }
@@ -23,7 +33,7 @@ namespace ExplicitMapper
     public class RawMapping<TSource, TDest> : RawMapping
     {
         internal override Type SourceType => typeof(TSource);
-        internal override Type DestinationType => typeof(TDest);
+        internal override Type DestType => typeof(TDest);
 
         public RawMapping<TSource, TDest> For<TDestMember>(
             Expression<Func<TDest, TDestMember>> dest, Expression<Func<TSource, TDestMember>> source)
