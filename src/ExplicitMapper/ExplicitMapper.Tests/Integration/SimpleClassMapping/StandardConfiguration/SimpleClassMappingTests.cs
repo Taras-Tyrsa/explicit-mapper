@@ -1,14 +1,14 @@
-﻿using ExplicitMapper.Tests.Integration.SimpleClassMapping.ObjectInitializerConfiguration;
-using FluentAssertions;
+﻿using FluentAssertions;
 using System;
 using Xunit;
 
 namespace ExplicitMapper.Tests.Integration.SimpleClassMapping.StandardConfiguration
 {
     [Collection("Integration tests")]
+    [Trait("Integration", "SimpleClassMapping")]
     public class SimpleClassMappingTests : IDisposable
     {
-        [Fact]
+        [Fact(DisplayName = "Use standard configuration")]
         public void UseStandardConfiguration_FieldsMapped()
         {
             MappingConfiguration.Add<XtoYStandardConfiguration>();

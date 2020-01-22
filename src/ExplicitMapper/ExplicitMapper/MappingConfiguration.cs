@@ -61,6 +61,12 @@ namespace ExplicitMapper
 
             foreach (var mapping in _rawMappings)
             {
+                if (_mapExpressions.ContainsKey((mapping.SourceType, mapping.DestType)))
+                {
+                    throw new ExplicitMapperException(
+                        $"Duplicate mapping configuration for source type '{mapping.SourceType.FullName}' and destination type '{mapping.DestType.FullName}'");
+                }
+
                 var sourceParam = Expression.Parameter(mapping.SourceType, "source");
                 var destParam = Expression.Parameter(mapping.DestType, "dest");
 
