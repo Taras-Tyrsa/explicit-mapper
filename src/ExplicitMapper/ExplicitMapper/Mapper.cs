@@ -7,19 +7,45 @@ namespace ExplicitMapper
         public static TDest Map<TDest>(object source)
             where TDest : new()
         {
+            var dest = new TDest();
+            Map(source, dest, source.GetType(), typeof(TDest));
+            return dest;
+        }
+
+        public static TDest Map<TSource, TDest>(TSource source)
+            where TDest : new()
+        {
+            var dest = new TDest();
+            Map(source, dest, typeof(TSource), typeof(TDest));
+            return dest;
+        }
+
+        public static object Map(object source, Type destType)
+        {
+            var dest = Activator.CreateInstance(destType);
+            Map(source, dest, source.GetType(), destType);
+            return dest;
+        }
+
+        public static void Map<TSource, TDest>(TSource source, TDest dest)
+            where TDest: new()
+        {
+            Map(source, dest, typeof(TSource), typeof(TDest));
+        }
+
+        public static void Map(object source, object dest, Type sourceType, Type destType)
+        {
             if (MappingConfiguration.MapExpressions == null)
             {
-                throw new Exception();
+                throw new ExplicitMapperException("Mapper not initialized");
             }
 
-            if (!MappingConfiguration.MapExpressions.TryGetValue((source.GetType(), typeof(TDest)), out var func))
+            if (!MappingConfiguration.MapExpressions.TryGetValue((sourceType, destType), out var func))
             {
-                throw new Exception();
+                throw new ExplicitMapperException($"Missing mapping configuration for source type {sourceType} and destination type {destType}");
             }
 
-            var dest = new TDest();
             func.DynamicInvoke(source, dest);
-            return dest;
         }
     }
 }

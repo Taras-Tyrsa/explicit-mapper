@@ -1,4 +1,4 @@
-﻿namespace ExplicitMapper.Tests.Integration.SameMappingConfiguredTwice
+﻿namespace ExplicitMapper.Tests.Integration.MappingMethods
 {
     public class X
     {
@@ -10,11 +10,5 @@
     {
         public int Y1 { get; set; }
         public int Y2 { get; set; }
-    }
-
-    public class Z
-    {
-        public int Z1 { get; set; }
-        public int Z2 { get; set; }
     }
 }

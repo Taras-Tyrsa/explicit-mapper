@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ExplicitMapper.Tests.Integration.SimpleClassMapping
+﻿namespace ExplicitMapper.Tests.Integration.SimpleClassMapping
 {
     public class X
     {

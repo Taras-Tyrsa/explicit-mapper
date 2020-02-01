@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ExplicitMapper.Tests.Integration.SameMappingConfiguredTwice.StandardConfiguration
+﻿namespace ExplicitMapper.Tests.Integration.SameMappingConfiguredTwice.StandardConfiguration
 {
     public class XtoYStandardConfiguration2 : MappingConfiguration
     {

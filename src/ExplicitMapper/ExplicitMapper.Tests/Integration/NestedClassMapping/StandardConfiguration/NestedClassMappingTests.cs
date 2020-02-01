@@ -5,7 +5,7 @@ using Xunit;
 namespace ExplicitMapper.Tests.Integration.NestedClassMapping.StandardConfiguration
 {
     [Collection("Integration tests")]
-    [Trait("Integration", "NestedClassMapping")]
+    [Trait("Integration", "Nested class mapping")]
     public class NestedClassMappingTests : IDisposable
     {
         [Fact(DisplayName = "Use standard configuration")]

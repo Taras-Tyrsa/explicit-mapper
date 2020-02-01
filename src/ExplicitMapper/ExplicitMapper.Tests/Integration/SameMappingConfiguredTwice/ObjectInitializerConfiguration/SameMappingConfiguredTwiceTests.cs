@@ -7,7 +7,7 @@ using Xunit;
 namespace ExplicitMapper.Tests.Integration.SameMappingConfiguredTwice.ObjectInitializerConfiguration
 {
     [Collection("Integration tests")]
-    [Trait("Integration", "SameMappingConfiguredTwice")]
+    [Trait("Integration", "Same mapping configured twice")]
     public class SameMappingConfiguredTwiceTests : IDisposable
     {
         [Fact(DisplayName = "Use object initializer configuration -> ExplicitMapperException thrown")]

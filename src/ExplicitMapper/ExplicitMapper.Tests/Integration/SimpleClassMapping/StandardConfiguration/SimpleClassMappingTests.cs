@@ -5,7 +5,7 @@ using Xunit;
 namespace ExplicitMapper.Tests.Integration.SimpleClassMapping.StandardConfiguration
 {
     [Collection("Integration tests")]
-    [Trait("Integration", "SimpleClassMapping")]
+    [Trait("Integration", "Simple class mapping")]
     public class SimpleClassMappingTests : IDisposable
     {
         [Fact(DisplayName = "Use standard configuration")]

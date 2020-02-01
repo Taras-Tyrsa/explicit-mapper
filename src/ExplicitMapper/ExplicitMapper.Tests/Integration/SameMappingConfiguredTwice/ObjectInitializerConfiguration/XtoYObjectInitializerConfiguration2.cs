@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ExplicitMapper.Tests.Integration.SameMappingConfiguredTwice.ObjectInitializerConfiguration
+﻿namespace ExplicitMapper.Tests.Integration.SameMappingConfiguredTwice.ObjectInitializerConfiguration
 {
     public class XtoYObjectInitializerConfiguration2 : MappingConfiguration
     {
