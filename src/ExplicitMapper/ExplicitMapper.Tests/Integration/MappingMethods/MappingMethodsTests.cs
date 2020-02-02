@@ -6,7 +6,7 @@ namespace ExplicitMapper.Tests.Integration.MappingMethods
 {
     [Collection("Integration tests")]
     [Trait("Integration", "Mapping methods")]
-    public class MappingMethodsTests : IDisposable
+    public class MappingToCollectionsTests : IDisposable
     {
         [Fact(DisplayName = "TDest Map<TDest>(object source)")]
         public void MapMethod1()

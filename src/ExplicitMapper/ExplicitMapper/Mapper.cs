@@ -1,39 +1,96 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ExplicitMapper
 {
     public static class Mapper
     {
         public static TDest Map<TDest>(object source)
-            where TDest : new()
         {
-            var dest = new TDest();
-            Map(source, dest, source.GetType(), typeof(TDest));
-            return dest;
+            return (TDest) MapToNewInstance(source, source.GetType(), typeof(TDest));
         }
 
         public static TDest Map<TSource, TDest>(TSource source)
-            where TDest : new()
         {
-            var dest = new TDest();
-            Map(source, dest, typeof(TSource), typeof(TDest));
-            return dest;
+            return (TDest) MapToNewInstance(source, typeof(TSource), typeof(TDest));
         }
 
         public static object Map(object source, Type sourceType, Type destType)
         {
-            var dest = Activator.CreateInstance(destType);
-            Map(source, dest, sourceType, destType);
-            return dest;
+            return MapToNewInstance(source, sourceType, destType);
         }
 
         public static void Map<TSource, TDest>(TSource source, TDest dest)
-            where TDest: new()
         {
-            Map(source, dest, typeof(TSource), typeof(TDest));
+            MapSingleInstance(source, dest, typeof(TSource), typeof(TDest));
         }
 
         public static void Map(object source, object dest, Type sourceType, Type destType)
+        {
+            MapSingleInstance(source, dest, sourceType, destType);
+        }
+
+        private static object MapToNewInstance(object source, Type sourceType, Type destType)
+        {
+            if (IsAssignableFromList(destType))
+            {
+                var count = (source as ICollection)?.Count;
+                var sourceElementType = IsAssignableFromList(sourceType) ?
+                    sourceType.GetGenericArguments()[0] : null;
+                var destElementType = destType.GetGenericArguments()[0];
+                var listType = typeof(List<>).MakeGenericType(destElementType);
+                var dest = (IList)(count.HasValue ? CreateInstance(listType, count) : CreateInstance(listType));
+
+                foreach (var sourceElement in ((IEnumerable)source))
+                {
+                    var destElement = CreateInstance(destElementType);
+                    MapSingleInstance(sourceElement, destElement, sourceElementType ?? sourceElement.GetType(), destElementType);
+                    dest.Add(destElement);
+                }
+
+                return dest;
+            }
+            else if (IsAssignableFromArray(destType))
+            {
+                throw new NotImplementedException("TO DO");
+            }
+            else
+            {
+                var dest = CreateInstance(destType);
+                MapSingleInstance(source, dest, sourceType, destType);
+                return dest;
+            }
+        }
+
+        private static bool IsAssignableFromArray(Type type)
+        {
+            return type.IsConstructedGenericType && type.IsArray;
+        }
+
+        private static bool IsAssignableFromList(Type type)
+        {
+            if (!type.IsConstructedGenericType)
+            {
+                return false;
+            }
+
+            var genericTypeDefinition = type.GetGenericTypeDefinition();
+
+            return 
+                genericTypeDefinition == typeof(ICollection<>) ||
+                genericTypeDefinition == typeof(IList<>) ||
+                genericTypeDefinition == typeof(IEnumerable<>) ||
+                genericTypeDefinition == typeof(List<>);
+        }
+
+        private static object CreateInstance(Type destType, params object[] args)
+        {
+            return Activator.CreateInstance(destType, args);
+        }
+
+        private static void MapSingleInstance(object source, object dest, Type sourceType, Type destType)
         {
             if (MappingConfiguration.MapExpressions == null)
             {
