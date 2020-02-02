@@ -44,7 +44,7 @@ namespace ExplicitMapper.Tests.Integration.MappingMethods
             y.Y2.Should().Be(x.X2);
         }
 
-        [Fact(DisplayName = "object Map(object source, Type destType)")]
+        [Fact(DisplayName = "object Map(object source, Type sourceType, Type destType)")]
         public void MapMethod3()
         {
             MappingConfiguration.Add<XtoYConfiguration>();
@@ -56,7 +56,7 @@ namespace ExplicitMapper.Tests.Integration.MappingMethods
                 X2 = 2
             };
 
-            var y = (Y) Mapper.Map(x, typeof(Y));
+            var y = (Y) Mapper.Map(x, typeof(X), typeof(Y));
 
             y.Y1.Should().Be(x.X1);
             y.Y2.Should().Be(x.X2);

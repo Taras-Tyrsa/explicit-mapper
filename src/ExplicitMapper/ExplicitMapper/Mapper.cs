@@ -20,10 +20,10 @@ namespace ExplicitMapper
             return dest;
         }
 
-        public static object Map(object source, Type destType)
+        public static object Map(object source, Type sourceType, Type destType)
         {
             var dest = Activator.CreateInstance(destType);
-            Map(source, dest, source.GetType(), destType);
+            Map(source, dest, sourceType, destType);
             return dest;
         }
 
