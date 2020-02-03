@@ -65,6 +65,18 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
             ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
         }
 
+        [Fact(DisplayName = "Map from typed array to typed array")]
+        public void TypedArrayToTypedArray()
+        {
+            MappingConfiguration.Add<XtoYConfiguration>();
+            MappingConfiguration.Build();
+
+            var ycollection = Mapper.Map<Y[]>(xcollection);
+
+            ycollection.Should().NotBeNull();
+            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+        }
+
         public void Dispose()
         {
             MappingConfiguration.Clear();

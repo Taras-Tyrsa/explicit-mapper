@@ -34,10 +34,10 @@ namespace ExplicitMapper
 
         private static object MapToNewInstance(object source, Type sourceType, Type destType)
         {
-            if (IsAssignableFromList(destType))
+            if (IsList(destType))
             {
                 var count = (source as ICollection)?.Count;
-                var sourceElementType = IsAssignableFromList(sourceType) ?
+                var sourceElementType = sourceType.IsConstructedGenericType ? 
                     sourceType.GetGenericArguments()[0] : null;
                 var destElementType = destType.GetGenericArguments()[0];
                 var listType = typeof(List<>).MakeGenericType(destElementType);
@@ -52,9 +52,28 @@ namespace ExplicitMapper
 
                 return dest;
             }
-            else if (IsAssignableFromArray(destType))
+            else if (IsArray(destType))
             {
-                throw new NotImplementedException("TO DO");
+                if (!(source is ICollection))
+                {
+                    source = ((IEnumerable)source).Cast<object>().ToArray();
+                }
+
+                var count = (source as ICollection).Count;
+                var sourceElementType = sourceType.GetElementType();
+                var destElementType = destType.GetElementType();
+                var dest = Array.CreateInstance(destElementType, count);
+                int i = 0;
+
+                foreach (var sourceElement in ((IEnumerable)source))
+                {
+                    var destElement = CreateInstance(destElementType);
+                    MapSingleInstance(sourceElement, destElement, sourceElementType ?? sourceElement.GetType(), destElementType);
+                    dest.SetValue(destElement, i);
+                    i++;
+                }
+
+                return dest;
             }
             else
             {
@@ -64,12 +83,12 @@ namespace ExplicitMapper
             }
         }
 
-        private static bool IsAssignableFromArray(Type type)
+        private static bool IsArray(Type type)
         {
-            return type.IsConstructedGenericType && type.IsArray;
+            return type.IsArray;
         }
 
-        private static bool IsAssignableFromList(Type type)
+        private static bool IsList(Type type)
         {
             if (!type.IsConstructedGenericType)
             {

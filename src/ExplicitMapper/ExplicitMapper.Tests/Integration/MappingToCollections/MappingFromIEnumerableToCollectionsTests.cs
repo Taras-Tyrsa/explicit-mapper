@@ -18,7 +18,7 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
         }.Select(x => x);
 
         [Fact(DisplayName = "Map from IEnumerable<> to List<>")]
-        public void TypedArrayToList()
+        public void IEnumerableToList()
         {
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
@@ -30,7 +30,7 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to IList<>")]
-        public void TypedArrayToIList()
+        public void IEnumerableToIList()
         {
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
@@ -42,7 +42,7 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to ICollection<>")]
-        public void TypedArrayToICollection()
+        public void IEnumerableToICollection()
         {
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
@@ -54,12 +54,24 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to IEnumerable<>")]
-        public void TypedArrayToIEnumerable()
+        public void IEnumerableToIEnumerable()
         {
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
 
             var ycollection = Mapper.Map<IEnumerable<Y>>(xcollection);
+
+            ycollection.Should().NotBeNull();
+            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+        }
+
+        [Fact(DisplayName = "Map from IEnumerable<> to typed array")]
+        public void IEnumerableToTypedArray()
+        {
+            MappingConfiguration.Add<XtoYConfiguration>();
+            MappingConfiguration.Build();
+
+            var ycollection = Mapper.Map<Y[]>(xcollection);
 
             ycollection.Should().NotBeNull();
             ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
