@@ -2,6 +2,22 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.1.0</Version>
+    <Authors>Taras Tyrsa</Authors>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/Taras-Tyrsa/explicit-mapper</PackageProjectUrl>
+    <Description>ExplicitMapper is an alternative to AutoMapper for those of us who feels frustrated with it and prefer explicit or even manual mapping configurations but still looks for convinient and laconic way to organize mappings.</Description>
+    <Copyright>Copyright ©2020 Taras Tyrsa</Copyright>
+    <Company />
+    <PackageTags>mapper mapping</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>
