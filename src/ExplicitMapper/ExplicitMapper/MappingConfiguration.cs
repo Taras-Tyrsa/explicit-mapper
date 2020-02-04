@@ -14,7 +14,6 @@ namespace ExplicitMapper
         internal static IReadOnlyDictionary<(Type source, Type dest), Delegate> MapExpressions => _mapExpressions;
 
         protected TDest Map<TDest>(object source)
-            where TDest: new()
         {
             return Mapper.Map<TDest>(source);
         }

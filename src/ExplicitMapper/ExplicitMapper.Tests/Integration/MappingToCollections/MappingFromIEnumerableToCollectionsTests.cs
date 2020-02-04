@@ -10,7 +10,7 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
     [Trait("Integration", "Mapping to collections")]
     public class MappingFromIEnumerableToCollectionsTests : IDisposable
     {
-        private IEnumerable<X> xcollection = new X[]
+        private IEnumerable<X> _xcollection = new X[]
         {
             new X() { X1 = 11, X2 = 12 },
             new X() { X1 = 21, X2 = 22 },
@@ -23,10 +23,10 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
 
-            var ycollection = Mapper.Map<List<Y>>(xcollection);
+            var ycollection = Mapper.Map<List<Y>>(_xcollection);
 
             ycollection.Should().NotBeNull();
-            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+            ycollection.Should().Equal(_xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to IList<>")]
@@ -35,10 +35,10 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
 
-            var ycollection = Mapper.Map<IList<Y>>(xcollection);
+            var ycollection = Mapper.Map<IList<Y>>(_xcollection);
 
             ycollection.Should().NotBeNull();
-            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+            ycollection.Should().Equal(_xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to ICollection<>")]
@@ -47,10 +47,10 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
 
-            var ycollection = Mapper.Map<ICollection<Y>>(xcollection);
+            var ycollection = Mapper.Map<ICollection<Y>>(_xcollection);
 
             ycollection.Should().NotBeNull();
-            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+            ycollection.Should().Equal(_xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to IEnumerable<>")]
@@ -59,10 +59,10 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
 
-            var ycollection = Mapper.Map<IEnumerable<Y>>(xcollection);
+            var ycollection = Mapper.Map<IEnumerable<Y>>(_xcollection);
 
             ycollection.Should().NotBeNull();
-            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+            ycollection.Should().Equal(_xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
         }
 
         [Fact(DisplayName = "Map from IEnumerable<> to typed array")]
@@ -71,10 +71,10 @@ namespace ExplicitMapper.Tests.Integration.MappingToCollections
             MappingConfiguration.Add<XtoYConfiguration>();
             MappingConfiguration.Build();
 
-            var ycollection = Mapper.Map<Y[]>(xcollection);
+            var ycollection = Mapper.Map<Y[]>(_xcollection);
 
             ycollection.Should().NotBeNull();
-            ycollection.Should().Equal(xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
+            ycollection.Should().Equal(_xcollection, (y, x) => y.Y1 == x.X1 && y.Y2 == x.X2);
         }
 
         public void Dispose()
