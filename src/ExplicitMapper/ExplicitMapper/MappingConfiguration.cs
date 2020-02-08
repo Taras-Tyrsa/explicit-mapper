@@ -57,6 +57,13 @@ namespace ExplicitMapper
 
         public static void Build()
         {
+            if (_rawMappings == null)
+            {
+                _projectionExpressions = new Dictionary<(Type source, Type dest), Delegate>(0);
+                _mapExpressions = new Dictionary<(Type source, Type dest), Delegate>(0);
+                return;
+            }
+
             _projectionExpressions = new Dictionary<(Type source, Type dest), Delegate>(_rawMappings.Count);
             _mapExpressions = new Dictionary<(Type source, Type dest), Delegate>(_rawMappings.Count);
 
@@ -96,7 +103,7 @@ namespace ExplicitMapper
                     var baseMapping = _rawMappings.FirstOrDefault(m => m.SourceType == baseSourceType && m.DestType == baseDestType);
                     if (baseMapping == null)
                     {
-                        throw new ExplicitMapperException($"Missing mapping configuration for source type {mapping.BaseMapping.Value.baseSourceType} and destination type {mapping.BaseMapping.Value.baseDestType}");
+                        throw new ExplicitMapperException($"Missing mapping configuration for source type {mapping.BaseMapping.Value.baseSourceType.FullName} and destination type {mapping.BaseMapping.Value.baseDestType.FullName}");
                     }
 
                     expressions.AddRange(GetMappingExpressions(baseMapping));

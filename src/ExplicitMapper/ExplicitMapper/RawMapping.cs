@@ -12,12 +12,17 @@ namespace ExplicitMapper
 
         internal abstract Type SourceType { get; }
         internal abstract Type DestType { get; }
-        internal (Type baseSourceType, Type baseDestType)? BaseMapping { get; private protected set; }
+        internal (Type baseSourceType, Type baseDestType)? BaseMapping { get; private set; }
         internal IReadOnlyList<(Expression source, Expression dest)> Expressions => _expressions;
 
         internal void AddExpressionPair(Expression source, Expression dest)
         {
             _expressions.Add((source, dest));
+        }
+
+        protected void SetBaseMapping((Type baseSourceType, Type baseDestType) mapping)
+        {
+            BaseMapping = mapping;
         }
     }
 
@@ -46,7 +51,7 @@ namespace ExplicitMapper
                 throw new ExplicitMapperException($"Mapping inheritance already configured for source type {typeof(TSource)} and destination type {typeof(TDest)}");
             }
 
-            BaseMapping = (typeof(TBaseSource), typeof(TBaseDest));
+            SetBaseMapping((typeof(TBaseSource), typeof(TBaseDest)));
             return this;
         }
     }

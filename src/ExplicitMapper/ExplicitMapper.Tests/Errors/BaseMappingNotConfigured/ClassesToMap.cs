@@ -1,4 +1,4 @@
-﻿namespace ExplicitMapper.Tests.Mapping.MappingInheritance
+﻿namespace ExplicitMapper.Tests.Errors.BaseMappingNotConfigured
 {
     public abstract class BaseX
     {
@@ -35,16 +35,5 @@
     {
         public int Y5 { get; set; }
         public int Y6 { get; set; }
-    }
-
-    public class Z
-    {
-        public int ZZ { get; set; }
-        public int Z1 { get; set; }
-        public int Z2 { get; set; }
-        public int Z3 { get; set; }
-        public int Z4 { get; set; }
-        public int Z5 { get; set; }
-        public int Z6 { get; set; }
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ExplicitMapper.Tests.Mapping.MappingInheritance
+﻿namespace ExplicitMapper.Tests.Mapping.MappingInheritance
 {
     class Configuration : MappingConfiguration
     {

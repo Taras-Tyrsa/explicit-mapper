@@ -118,7 +118,7 @@ namespace ExplicitMapper
 
             if (!MappingConfiguration.MapExpressions.TryGetValue((sourceType, destType), out var func))
             {
-                throw new ExplicitMapperException($"Missing mapping configuration for source type {sourceType} and destination type {destType}");
+                throw new ExplicitMapperException($"Missing mapping configuration for source type {sourceType.FullName} and destination type {destType.FullName}");
             }
 
             func.DynamicInvoke(source, dest);
