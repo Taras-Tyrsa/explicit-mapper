@@ -1,7 +1,52 @@
 # ExplicitMapper
 ExplicitMapper is an alternative to AutoMapper for those of us who feels frustrated with it and prefer explicit or even manual mapping configurations but still looks for convinient and laconic way to organize mappings.
 
-# Examples
+# Features
+
+* Explicit rules for mapping. No hidden conventions, no unexpected behavior. This gives you full track of references in IDE, working static analysis, safe refactoring, type safety, compile time errors and other useful things you lack with AutoMapper.
+
+* Laconic mapping configurations. For destination types with default constructor you can get even less code than with manual written mapping code. For example, handling of collections is already done for you:
+```
+    CreateMap<Order, OrderViewModel>(
+        s => new OrderViewModel()
+        {
+            Date = s.Date,
+            OrderLineViewModels = Map<IList<OrderLineViewModel>>(s.OrderLines)
+        });
+```
+    
+Alternative syntax for any other types is still less verbose than explicit configuration in AutoMapper:
+```
+    CreateMap<Product, ProductViewModel>()
+        .For(d => d.Description, s => s.Manufacturer + " - " + s.Name)
+        .For(d => d.Size, s => Map<SizeViewModel>(s.Size));
+```  
+Both styles are completely equivalent.
+
+* Code organization: use MappingConfiguration classes to group your mappings similar to AutoMapper profiles.
+
+* Static Mapper class:
+```
+    var productViewModel = Mapper.Map<ProductViewModel>(product);
+```   
+
+* And DI-friendly interface IMapper:
+```
+    IMapper _mapper;
+    ...
+    var productViewModel = _mapper.Map<ProductViewModel>(product);
+```
+
+* Mapping configuration inheritance with Inherits<TBaseSource, TBaseDest>() method.
+```
+    CreateMap<Foo, Bar>()
+        .Inherits<BaseFoo, BaseBar>()
+        .For(d => d.ChildProperty, s => s.ChildProperty);
+```       
+
+* Projections: **coming soon!**
+
+# Example
 Let's say we want to map following classes:
 
     public class Product
