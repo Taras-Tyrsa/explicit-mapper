@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace ExplicitMapper
@@ -30,8 +31,8 @@ namespace ExplicitMapper
             return mapping;
         }
 
-        protected void CreateMap<TSource, TDest>(Expression<Func<TSource, TDest>> objectInitializer)
-            where TSource: new()
+        protected RawMapping<TSource, TDest> CreateMap<TSource, TDest>(Expression<Func<TSource, TDest>> objectInitializer)
+            where TDest : new()
         {
             if (objectInitializer == null)
             {
@@ -44,8 +45,8 @@ namespace ExplicitMapper
             }
 
             var mapping = ObjectInitializerParser.Parse(objectInitializer);
-
             _rawMappings.Add(mapping);
+            return mapping;
         }
 
         public static void Add<T>()
@@ -70,16 +71,40 @@ namespace ExplicitMapper
                 var sourceParam = Expression.Parameter(mapping.SourceType, "source");
                 var destParam = Expression.Parameter(mapping.DestType, "dest");
 
-                var projectionExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestType, sourceParam, mapping.Expressions);
+                /*var projectionExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestType, sourceParam, mapping.Expressions);
                 var projectionLambda = Expression.Lambda(projectionExpression, sourceParam);
-                _projectionExpressions.Add((mapping.SourceType, mapping.DestType), projectionLambda.Compile());
+                _projectionExpressions.Add((mapping.SourceType, mapping.DestType), projectionLambda.Compile());*/
 
-                var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mapping.Expressions);
+                var mappingExpressions = GetMappingExpressions(mapping);
+                var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mappingExpressions);
                 var mapLambda = Expression.Lambda(mapExpression, sourceParam, destParam);
                 _mapExpressions.Add((mapping.SourceType, mapping.DestType), mapLambda.Compile());
             }
 
             _rawMappings = null;
+
+
+            IReadOnlyList<(Expression source, Expression dest)> GetMappingExpressions(RawMapping mapping)
+            {
+                var expressions = new List<(Expression source, Expression dest)>();
+
+                if (mapping.BaseMapping != null)
+                {
+                    var baseSourceType = mapping.BaseMapping.Value.baseSourceType;
+                    var baseDestType = mapping.BaseMapping.Value.baseDestType;
+
+                    var baseMapping = _rawMappings.FirstOrDefault(m => m.SourceType == baseSourceType && m.DestType == baseDestType);
+                    if (baseMapping == null)
+                    {
+                        throw new ExplicitMapperException($"Missing mapping configuration for source type {mapping.BaseMapping.Value.baseSourceType} and destination type {mapping.BaseMapping.Value.baseDestType}");
+                    }
+
+                    expressions.AddRange(GetMappingExpressions(baseMapping));
+                }
+
+                expressions.AddRange(mapping.Expressions);
+                return expressions;
+            }
         }
 
         public static void Clear()

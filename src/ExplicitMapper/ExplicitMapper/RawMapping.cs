@@ -5,24 +5,15 @@ using System.Text;
 
 namespace ExplicitMapper
 {
-    public class RawMapping
+    public abstract class RawMapping
     {
         private readonly List<(Expression source, Expression dest)> _expressions =
             new List<(Expression source, Expression dest)>();
 
-        internal virtual Type SourceType { get; }
-        internal virtual Type DestType { get; }
+        internal abstract Type SourceType { get; }
+        internal abstract Type DestType { get; }
+        internal (Type baseSourceType, Type baseDestType)? BaseMapping { get; private protected set; }
         internal IReadOnlyList<(Expression source, Expression dest)> Expressions => _expressions;
-
-        internal RawMapping()
-        {
-        }
-
-        internal RawMapping(Type sourceType, Type destType)
-        {
-            SourceType = sourceType;
-            DestType = destType;
-        }
 
         internal void AddExpressionPair(Expression source, Expression dest)
         {
@@ -45,6 +36,17 @@ namespace ExplicitMapper
 
             AddExpressionPair(source, dest);
 
+            return this;
+        }
+
+        public RawMapping<TSource, TDest> Inherits<TBaseSource, TBaseDest>()
+        {
+            if (BaseMapping != null)
+            {
+                throw new ExplicitMapperException($"Mapping inheritance already configured for source type {typeof(TSource)} and destination type {typeof(TDest)}");
+            }
+
+            BaseMapping = (typeof(TBaseSource), typeof(TBaseDest));
             return this;
         }
     }

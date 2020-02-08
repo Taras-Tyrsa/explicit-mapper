@@ -1,15 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace ExplicitMapper
 {
     internal static class ObjectInitializerParser
     {
-        public static RawMapping Parse<TSource, TDest>(Expression<Func<TSource, TDest>> expression)
+        public static RawMapping<TSource, TDest> Parse<TSource, TDest>(Expression<Func<TSource, TDest>> expression)
         {
-            var rawMapping = new RawMapping(typeof(TSource), typeof(TDest));
+            var rawMapping = new RawMapping<TSource, TDest>();
 
             foreach (MemberAssignment binding in ((MemberInitExpression)expression.Body).Bindings)
             {
