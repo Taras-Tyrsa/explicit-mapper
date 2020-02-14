@@ -1,6 +1,10 @@
 # ExplicitMapper
 ExplicitMapper is an alternative to AutoMapper for those of us who feels frustrated with it and prefer explicit or even manual mapping configurations but still looks for convinient and laconic way to organize mappings.
 
+# Installation
+You can install ExplicitMapper as [NuGet package](https://www.nuget.org/packages/ExplicitMapper/):
+`PM> Install-Package ExplicitMapper`
+
 # Features
 
 * Explicit rules for mapping. No hidden conventions, no unexpected behavior. This gives you full track of references in IDE, working static analysis, safe refactoring, type safety, compile time errors and other useful things you lack with AutoMapper.
