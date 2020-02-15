@@ -106,6 +106,11 @@ namespace ExplicitMapper
 
         private static object CreateInstance(Type destType, params object[] args)
         {
+            if (args.Length == 0)
+            {
+                return InstanceFactory.CreateInstance(destType);
+            }
+
             return Activator.CreateInstance(destType, args);
         }
 
