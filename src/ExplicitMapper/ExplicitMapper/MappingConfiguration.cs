@@ -8,11 +8,11 @@ namespace ExplicitMapper
     public class MappingConfiguration
     {
         private static List<RawMapping> _rawMappings = new List<RawMapping>();
-        private static Dictionary<(Type source, Type dest), Delegate> _projectionExpressions;
-        private static Dictionary<(Type source, Type dest), Delegate> _mapExpressions;
+        private static Dictionary<(Type source, Type dest), Action<object, object>> _projectionExpressions;
+        private static Dictionary<(Type source, Type dest), Action<object, object>> _mapExpressions;
 
-        internal static IReadOnlyDictionary<(Type source, Type dest), Delegate> ProjectionExpressions => _projectionExpressions;
-        internal static IReadOnlyDictionary<(Type source, Type dest), Delegate> MapExpressions => _mapExpressions;
+        internal static IReadOnlyDictionary<(Type source, Type dest), Action<object, object>> ProjectionExpressions => _projectionExpressions;
+        internal static IReadOnlyDictionary<(Type source, Type dest), Action<object, object>> MapExpressions => _mapExpressions;
 
         protected TDest Map<TDest>(object source)
         {
@@ -59,13 +59,13 @@ namespace ExplicitMapper
         {
             if (_rawMappings == null)
             {
-                _projectionExpressions = new Dictionary<(Type source, Type dest), Delegate>(0);
-                _mapExpressions = new Dictionary<(Type source, Type dest), Delegate>(0);
+                _projectionExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(0);
+                _mapExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(0);
                 return;
             }
 
-            _projectionExpressions = new Dictionary<(Type source, Type dest), Delegate>(_rawMappings.Count);
-            _mapExpressions = new Dictionary<(Type source, Type dest), Delegate>(_rawMappings.Count);
+            _projectionExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(_rawMappings.Count);
+            _mapExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(_rawMappings.Count);
 
             foreach (var mapping in _rawMappings)
             {
@@ -75,17 +75,17 @@ namespace ExplicitMapper
                         $"Duplicate mapping configuration for source type '{mapping.SourceType.FullName}' and destination type '{mapping.DestType.FullName}'");
                 }
 
-                var sourceParam = Expression.Parameter(mapping.SourceType, "source");
-                var destParam = Expression.Parameter(mapping.DestType, "dest");
+                var sourceParam = Expression.Parameter(typeof(object), "source");
+                var destParam = Expression.Parameter(typeof(object), "dest");
 
                 /*var projectionExpression = ProjectionExpressionBuilder.BuildProjectionExpression(mapping.DestType, sourceParam, mapping.Expressions);
                 var projectionLambda = Expression.Lambda(projectionExpression, sourceParam);
                 _projectionExpressions.Add((mapping.SourceType, mapping.DestType), projectionLambda.Compile());*/
 
                 var mappingExpressions = GetMappingExpressions(mapping);
-                var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mappingExpressions);
-                var mapLambda = Expression.Lambda(mapExpression, sourceParam, destParam);
-                _mapExpressions.Add((mapping.SourceType, mapping.DestType), mapLambda.Compile());
+                var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mapping.SourceType, mapping.DestType, mappingExpressions);
+                var mapLambda = Expression.Lambda(typeof(Action<object, object>), mapExpression, sourceParam, destParam);
+                _mapExpressions.Add((mapping.SourceType, mapping.DestType), (Action<object, object>)mapLambda.Compile());
             }
 
             _rawMappings = null;
