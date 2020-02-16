@@ -40,12 +40,11 @@ namespace ExplicitMapper
                 var sourceElementType = sourceType.IsConstructedGenericType ? 
                     sourceType.GetGenericArguments()[0] : null;
                 var destElementType = destType.GetGenericArguments()[0];
-                var listType = typeof(List<>).MakeGenericType(destElementType);
-                var dest = (IList)(count.HasValue ? CreateInstance(listType, count) : CreateInstance(listType));
+                var dest = (IList)InstanceFactory.CreateList(destElementType, count ?? 0);
 
                 foreach (var sourceElement in ((IEnumerable)source))
                 {
-                    var destElement = CreateInstance(destElementType);
+                    var destElement = InstanceFactory.CreateInstance(destElementType);
                     MapSingleInstance(sourceElement, destElement, sourceElementType ?? sourceElement.GetType(), destElementType);
                     dest.Add(destElement);
                 }
@@ -62,12 +61,12 @@ namespace ExplicitMapper
                 var count = (source as ICollection).Count;
                 var sourceElementType = sourceType.GetElementType();
                 var destElementType = destType.GetElementType();
-                var dest = Array.CreateInstance(destElementType, count);
+                var dest = (Array)InstanceFactory.CreateArray(destElementType, count);
                 int i = 0;
 
                 foreach (var sourceElement in ((IEnumerable)source))
                 {
-                    var destElement = CreateInstance(destElementType);
+                    var destElement = InstanceFactory.CreateInstance(destElementType);
                     MapSingleInstance(sourceElement, destElement, sourceElementType ?? sourceElement.GetType(), destElementType);
                     dest.SetValue(destElement, i);
                     i++;
@@ -77,7 +76,7 @@ namespace ExplicitMapper
             }
             else
             {
-                var dest = CreateInstance(destType);
+                var dest = InstanceFactory.CreateInstance(destType);
                 MapSingleInstance(source, dest, sourceType, destType);
                 return dest;
             }
@@ -102,16 +101,6 @@ namespace ExplicitMapper
                 genericTypeDefinition == typeof(IList<>) ||
                 genericTypeDefinition == typeof(IEnumerable<>) ||
                 genericTypeDefinition == typeof(List<>);
-        }
-
-        private static object CreateInstance(Type destType, params object[] args)
-        {
-            if (args.Length == 0)
-            {
-                return InstanceFactory.CreateInstance(destType);
-            }
-
-            return Activator.CreateInstance(destType, args);
         }
 
         private static void MapSingleInstance(object source, object dest, Type sourceType, Type destType)
