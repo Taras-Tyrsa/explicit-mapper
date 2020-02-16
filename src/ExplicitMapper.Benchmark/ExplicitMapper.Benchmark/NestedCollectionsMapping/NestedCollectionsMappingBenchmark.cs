@@ -4,12 +4,13 @@ using System;
 using IExplicitMapper = ExplicitMapper.IMapper;
 using IAutoMapper = AutoMapper.IMapper;
 using AutoMapper;
+using System.Collections.Generic;
 
-namespace ExplicitMapper.Benchmark.SimpleMapping
+namespace ExplicitMapper.Benchmark.NestedCollectionsMapping
 {
     [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [RPlotExporter]
-    public class SimpleMappingBenchmark
+    public class NestedCollectionsMappingBenchmark
     {
         private X[] _source;
         private Y[] _dest;
@@ -48,17 +49,27 @@ namespace ExplicitMapper.Benchmark.SimpleMapping
 
             for (int i = 0; i < N; i++)
             {
+                int size = i % 100 + 1;
+
                 _source[i] = new X()
                 {
-                    P1 = Guid.NewGuid().ToString(),
-                    P2 = Guid.NewGuid().ToString(),
-                    P3 = random.Next(),
-                    P4 = random.Next(),
-                    P5 = Guid.NewGuid(),
-                    P6 = Guid.NewGuid(),
-                    P7 = random.Next(),
-                    P8 = random.Next()
+                    ArrayP = new NestedX[size],
+                    ListP = new List<NestedX>(size)
                 };
+
+                for (int j = 0; j < size; j++)
+                {
+                    _source[i].ArrayP[j] = new NestedX()
+                    {
+                        P1 = random.Next(),
+                        P2 = random.Next()
+                    };
+                    _source[i].ListP.Add(new NestedX()
+                    {
+                        P1 = random.Next(),
+                        P2 = random.Next()
+                    });
+                }
             }
         }
 

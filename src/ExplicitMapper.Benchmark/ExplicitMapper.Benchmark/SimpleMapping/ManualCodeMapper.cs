@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ExplicitMapper.Benchmark.SimpleMapping
 {
-    class ManualCodeMapping
+    class ManualCodeMapper
     {
         public static Y Map(X x)
         {
