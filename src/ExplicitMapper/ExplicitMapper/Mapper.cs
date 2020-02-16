@@ -126,7 +126,7 @@ namespace ExplicitMapper
                 throw new ExplicitMapperException($"Missing mapping configuration for source type {sourceType.FullName} and destination type {destType.FullName}");
             }
 
-            func.DynamicInvoke(source, dest);
+            func(source, dest);
         }
     }
 }
