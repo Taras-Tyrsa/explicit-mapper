@@ -36,32 +36,77 @@ namespace ExplicitMapper
         {
             if (IsList(destType))
             {
-                var count = (source as ICollection)?.Count;
-                var sourceElementType = sourceType.IsConstructedGenericType ? 
-                    sourceType.GetGenericArguments()[0] : null;
-                var destElementType = destType.GetGenericArguments()[0];
-                var dest = (IList)InstanceFactory.CreateList(destElementType, count ?? 0);
+                return MapToList(source, sourceType, destType);
+            }
+            else if (IsArray(destType))
+            {
+                return MapToArray(source, sourceType, destType);
+            }
+            else
+            {
+                var dest = InstanceFactory.CreateInstance(destType);
+                MapSingleInstance(source, dest, sourceType, destType);
+                return dest;
+            }
+        }
 
+        private static object MapToList(object source, Type sourceType, Type destType)
+        {
+            var count = (source as ICollection)?.Count;
+            var sourceElementType = sourceType.IsConstructedGenericType ?
+                sourceType.GetGenericArguments()[0] : null;
+            var destElementType = destType.GetGenericArguments()[0];
+            var dest = (IList)InstanceFactory.CreateList(destElementType, count ?? 0);
+
+            if (source is IList)
+            {
+                var sourceList = (IList)source;
+
+                for (int i = 0; i < sourceList.Count; i++)
+                {
+                    var destElement = InstanceFactory.CreateInstance(destElementType);
+                    MapSingleInstance(sourceList[i], destElement, sourceElementType ?? sourceList[i].GetType(), destElementType);
+                    dest.Add(destElement);
+                }
+            }
+            else
+            {
                 foreach (var sourceElement in ((IEnumerable)source))
                 {
                     var destElement = InstanceFactory.CreateInstance(destElementType);
                     MapSingleInstance(sourceElement, destElement, sourceElementType ?? sourceElement.GetType(), destElementType);
                     dest.Add(destElement);
                 }
-
-                return dest;
             }
-            else if (IsArray(destType))
-            {
-                if (!(source is ICollection))
-                {
-                    source = ((IEnumerable)source).Cast<object>().ToArray();
-                }
 
-                var count = (source as ICollection).Count;
-                var sourceElementType = sourceType.GetElementType();
-                var destElementType = destType.GetElementType();
-                var dest = (Array)InstanceFactory.CreateArray(destElementType, count);
+            return dest;
+        }
+
+        private static object MapToArray(object source, Type sourceType, Type destType)
+        {
+            if (!(source is ICollection))
+            {
+                source = ((IEnumerable)source).Cast<object>().ToArray();
+            }
+
+            var count = (source as ICollection).Count;
+            var sourceElementType = sourceType.GetElementType();
+            var destElementType = destType.GetElementType();
+            var dest = (Array)InstanceFactory.CreateArray(destElementType, count);
+
+            if (source is IList)
+            {
+                var sourceList = (IList)source;
+
+                for (int i = 0; i < sourceList.Count; i++)
+                {
+                    var destElement = InstanceFactory.CreateInstance(destElementType);
+                    MapSingleInstance(sourceList[i], destElement, sourceElementType ?? sourceList[i].GetType(), destElementType);
+                    dest.SetValue(destElement, i);
+                }
+            }
+            else
+            {
                 int i = 0;
 
                 foreach (var sourceElement in ((IEnumerable)source))
@@ -71,15 +116,9 @@ namespace ExplicitMapper
                     dest.SetValue(destElement, i);
                     i++;
                 }
+            }
 
-                return dest;
-            }
-            else
-            {
-                var dest = InstanceFactory.CreateInstance(destType);
-                MapSingleInstance(source, dest, sourceType, destType);
-                return dest;
-            }
+            return dest;
         }
 
         private static bool IsArray(Type type)

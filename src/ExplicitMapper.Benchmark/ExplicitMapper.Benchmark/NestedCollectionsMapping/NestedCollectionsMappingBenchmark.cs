@@ -18,7 +18,7 @@ namespace ExplicitMapper.Benchmark.NestedCollectionsMapping
         private IExplicitMapper _explicitMapper;
         private IAutoMapper _autoMapper;
 
-        [Params(100000, 1000000)]
+        [Params(10000, 100000)]
         public int N;
 
         [GlobalSetup]
