@@ -52,32 +52,42 @@ namespace ExplicitMapper
 
         private static object MapToList(object source, Type sourceType, Type destType)
         {
-            var count = (source as ICollection)?.Count;
-            var sourceElementType = sourceType.IsConstructedGenericType ?
-                sourceType.GetGenericArguments()[0] : null;
-            var destElementType = destType.GetGenericArguments()[0];
-            var dest = (IList)InstanceFactory.CreateList(destElementType, count ?? 0);
+            Type sourceElementType;
 
-            if (source is IList)
+            if (sourceType.IsConstructedGenericType)
             {
-                var sourceList = (IList)source;
-
-                for (int i = 0; i < sourceList.Count; i++)
-                {
-                    var destElement = InstanceFactory.CreateInstance(destElementType);
-                    MapSingleInstance(sourceList[i], destElement, sourceElementType ?? sourceList[i].GetType(), destElementType);
-                    dest.Add(destElement);
-                }
+                sourceElementType = sourceType.GetGenericArguments()[0];
             }
+            else if (sourceType.IsArray)
+            {
+                sourceElementType = sourceType.GetElementType();
+            } 
             else
             {
-                foreach (var sourceElement in ((IEnumerable)source))
-                {
-                    var destElement = InstanceFactory.CreateInstance(destElementType);
-                    MapSingleInstance(sourceElement, destElement, sourceElementType ?? sourceElement.GetType(), destElementType);
-                    dest.Add(destElement);
-                }
+                throw new ExplicitMapperException($"Source type {sourceType.FullName} is not supported");
             }
+
+            if (!(source is ICollection))
+            {
+                var sourceList = (IList)InstanceFactory.CreateList(sourceElementType, 0);
+
+                foreach (var sourceItem in ((IEnumerable) source))
+                {
+                    sourceList.Add(sourceItem);
+                }
+
+                source = sourceList;
+            }
+
+            var count = (source as ICollection).Count;
+
+            var destElementType = destType.GetGenericArguments()[0];
+            var dest = (IList)InstanceFactory.CreateList(destElementType, count);
+
+            var sourceCollectionType = typeof(ICollection<>).MakeGenericType(sourceElementType);
+            var destListType = typeof(List<>).MakeGenericType(destElementType);
+
+            MapSingleInstance(source, dest, sourceCollectionType, destListType);
 
             return dest;
         }

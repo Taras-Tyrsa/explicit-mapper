@@ -86,6 +86,15 @@ namespace ExplicitMapper
                 var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mapping.SourceType, mapping.DestType, mappingExpressions);
                 var mapLambda = Expression.Lambda(typeof(Action<object, object>), mapExpression, sourceParam, destParam);
                 _mapExpressions.Add((mapping.SourceType, mapping.DestType), (Action<object, object>)mapLambda.Compile());
+
+                if (!mapping.DestType.IsAbstract)
+                {
+                    var sourceCollectionType = typeof(ICollection<>).MakeGenericType(mapping.SourceType);
+                    var destListType = typeof(List<>).MakeGenericType(mapping.DestType);
+                    var mapListExpression = MapExpressionBuilder.BuildMapToListExpression(sourceParam, destParam, mapping.SourceType, mapping.DestType, mappingExpressions);
+                    var mapListLambda = Expression.Lambda(typeof(Action<object, object>), mapListExpression, sourceParam, destParam);
+                    _mapExpressions.Add((sourceCollectionType, destListType), (Action<object, object>)mapListLambda.Compile());
+                }
             }
 
             _rawMappings = null;
