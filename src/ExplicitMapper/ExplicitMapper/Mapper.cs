@@ -52,31 +52,11 @@ namespace ExplicitMapper
 
         private static object MapToList(object source, Type sourceType, Type destType)
         {
-            Type sourceElementType;
-
-            if (sourceType.IsConstructedGenericType)
-            {
-                sourceElementType = sourceType.GetGenericArguments()[0];
-            }
-            else if (sourceType.IsArray)
-            {
-                sourceElementType = sourceType.GetElementType();
-            } 
-            else
-            {
-                throw new ExplicitMapperException($"Source type {sourceType.FullName} is not supported");
-            }
+            Type sourceElementType = GetElementType(sourceType);
 
             if (!(source is ICollection))
             {
-                var sourceList = (IList)InstanceFactory.CreateList(sourceElementType, 0);
-
-                foreach (var sourceItem in ((IEnumerable) source))
-                {
-                    sourceList.Add(sourceItem);
-                }
-
-                source = sourceList;
+                source = CopyToICollection(source, sourceElementType);
             }
 
             var count = (source as ICollection).Count;
@@ -94,6 +74,28 @@ namespace ExplicitMapper
 
         private static object MapToArray(object source, Type sourceType, Type destType)
         {
+            Type sourceElementType = GetElementType(sourceType);
+
+            if (!(source is ICollection))
+            {
+                source = CopyToICollection(source, sourceElementType);
+            }
+
+            var count = (source as ICollection).Count;
+
+            var destElementType = destType.GetElementType();
+            var dest = (Array)InstanceFactory.CreateArray(destElementType, count);
+
+            var sourceCollectionType = typeof(ICollection<>).MakeGenericType(sourceElementType);
+            var destArrayType = destElementType.MakeArrayType();
+
+            MapSingleInstance(source, dest, sourceCollectionType, destArrayType);
+
+            return dest;
+        }
+
+        private static Type GetElementType(Type sourceType)
+        {
             Type sourceElementType;
 
             if (sourceType.IsConstructedGenericType)
@@ -109,29 +111,20 @@ namespace ExplicitMapper
                 throw new ExplicitMapperException($"Source type {sourceType.FullName} is not supported");
             }
 
-            if (!(source is ICollection))
+            return sourceElementType;
+        }
+
+        private static object CopyToICollection(object source, Type sourceElementType)
+        {
+            IList sourceList = (IList)InstanceFactory.CreateList(sourceElementType, 0);
+
+            foreach (var sourceItem in ((IEnumerable)source))
             {
-                var sourceList = (IList)InstanceFactory.CreateList(sourceElementType, 0);
-
-                foreach (var sourceItem in ((IEnumerable)source))
-                {
-                    sourceList.Add(sourceItem);
-                }
-
-                source = sourceList;
+                sourceList.Add(sourceItem);
             }
 
-            var count = (source as ICollection).Count;
-
-            var destElementType = destType.GetElementType();
-            var dest = (Array)InstanceFactory.CreateArray(destElementType, count);
-
-            var sourceCollectionType = typeof(ICollection<>).MakeGenericType(sourceElementType);
-            var destArrayType = destElementType.MakeArrayType();
-
-            MapSingleInstance(source, dest, sourceCollectionType, destArrayType);
-
-            return dest;
+            source = sourceList;
+            return source;
         }
 
         private static bool IsArray(Type type)
