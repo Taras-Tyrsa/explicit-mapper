@@ -85,6 +85,53 @@ namespace ExplicitMapper
             return Expression.Block(new[] { sourceCollection, destList }, assignmentExpressions);
         }
 
+        internal static Expression BuildMapToArrayExpression(
+            ParameterExpression sourceParam,
+            ParameterExpression destParam,
+            Type sourceType,
+            Type destType,
+            IReadOnlyCollection<(Expression source, Expression dest)> expressions)
+        {
+            var assignmentExpressions = new List<Expression>(expressions.Count);
+
+            var sourceCollectionType = typeof(ICollection<>).MakeGenericType(sourceType);
+            var destArrayType = destType.MakeArrayType();
+            var sourceCollection = Expression.Variable(sourceCollectionType, "sourceCollection");
+            var destArray = Expression.Variable(destArrayType, "destList");
+            var sourceParamConsersion = Expression.Assign(sourceCollection, Expression.Convert(sourceParam, sourceCollectionType));
+            var destParamConversion = Expression.Assign(destArray, Expression.Convert(destParam, destArrayType));
+
+            assignmentExpressions.Add(sourceParamConsersion);
+            assignmentExpressions.Add(destParamConversion);
+
+            if (!destType.GetConstructors().Any(c => c.GetParameters().Length == 0))
+            {
+                throw new ExplicitMapperException($"No default constructor for type {destType} exists");
+            }
+
+            var sourceItemVariable = Expression.Variable(sourceType, "sourceItem");
+            var destItemVariable = Expression.Variable(destType, "destItem");
+
+            var newDestItemExpression = Expression.New(destType);
+            var destItemNewAssignmentExpression = Expression.Assign(destItemVariable, newDestItemExpression);
+
+            var mapExpression = BuildMapExpression(sourceItemVariable, destItemVariable, sourceType, destType, expressions);
+            var setMethod = typeof(Array).GetMethod(nameof(Array.SetValue), new[] { typeof(object), typeof(int) });
+            var indexVariable = Expression.Variable(typeof(int), "i");
+            var itemAssignmentExpression = Expression.Call(destArray, setMethod, destItemVariable, indexVariable);
+            var indexIncrementExpression = Expression.PostIncrementAssign(indexVariable);
+            var loopBlock = Expression.Block(
+                new[] { destItemVariable, indexVariable },
+                destItemNewAssignmentExpression, mapExpression, itemAssignmentExpression, indexIncrementExpression);
+
+            var forEachLoopExpression = ForEach(sourceCollection, sourceItemVariable, loopBlock);
+
+            assignmentExpressions.Add(forEachLoopExpression);
+            assignmentExpressions.Add(destArray);
+
+            return Expression.Block(new[] { sourceCollection, destArray }, assignmentExpressions);
+        }
+
         private static Expression ForEach(Expression collection, ParameterExpression loopVar, Expression loopContent)
         {
             var elementType = loopVar.Type;
