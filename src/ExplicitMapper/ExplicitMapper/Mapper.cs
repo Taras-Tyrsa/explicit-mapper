@@ -44,9 +44,7 @@ namespace ExplicitMapper
             }
             else
             {
-                var dest = InstanceFactory.CreateInstance(destType);
-                MapSingleInstance(source, dest, sourceType, destType);
-                return dest;
+                return MapSingleInstance(source, null, sourceType, destType);
             }
         }
 
@@ -59,17 +57,11 @@ namespace ExplicitMapper
                 source = CopyToICollection(source, sourceElementType);
             }
 
-            var count = (source as ICollection).Count;
-
             var destElementType = destType.GetGenericArguments()[0];
-            var dest = (IList)InstanceFactory.CreateList(destElementType, count);
-
             var sourceCollectionType = typeof(ICollection<>).MakeGenericType(sourceElementType);
             var destListType = typeof(List<>).MakeGenericType(destElementType);
 
-            MapSingleInstance(source, dest, sourceCollectionType, destListType);
-
-            return dest;
+            return MapSingleInstance(source, null, sourceCollectionType, destListType);
         }
 
         private static object MapToArray(object source, Type sourceType, Type destType)
@@ -81,17 +73,11 @@ namespace ExplicitMapper
                 source = CopyToICollection(source, sourceElementType);
             }
 
-            var count = (source as ICollection).Count;
-
             var destElementType = destType.GetElementType();
-            var dest = (Array)InstanceFactory.CreateArray(destElementType, count);
-
             var sourceCollectionType = typeof(ICollection<>).MakeGenericType(sourceElementType);
             var destArrayType = destElementType.MakeArrayType();
 
-            MapSingleInstance(source, dest, sourceCollectionType, destArrayType);
-
-            return dest;
+            return MapSingleInstance(source, null, sourceCollectionType, destArrayType);
         }
 
         private static Type GetElementType(Type sourceType)
@@ -148,7 +134,7 @@ namespace ExplicitMapper
                 genericTypeDefinition == typeof(List<>);
         }
 
-        private static void MapSingleInstance(object source, object dest, Type sourceType, Type destType)
+        private static object MapSingleInstance(object source, object dest, Type sourceType, Type destType)
         {
             if (MappingConfiguration.MapExpressions == null)
             {
@@ -160,7 +146,7 @@ namespace ExplicitMapper
                 throw new ExplicitMapperException($"Missing mapping configuration for source type {sourceType.FullName} and destination type {destType.FullName}");
             }
 
-            func(source, dest);
+            return func(source, dest);
         }
     }
 }

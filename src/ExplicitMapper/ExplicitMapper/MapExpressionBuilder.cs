@@ -19,6 +19,16 @@ namespace ExplicitMapper
         {
             var assignmentExpressions = new List<Expression>(expressions.Count);
 
+            if (!destType.IsAbstract && destType.GetConstructor(new Type[0]) != null)
+            {
+                var createDestExpression = Expression.IfThen(
+                    Expression.Equal(destParam, Expression.Constant(null, destType)),
+                    Expression.Assign(destParam, Expression.New(destType))
+                );
+
+                assignmentExpressions.Add(createDestExpression);
+            }
+
             var sourceParamCasted = sourceParam;
             var destParamCasted = destParam;
 
@@ -53,6 +63,8 @@ namespace ExplicitMapper
                 assignmentExpressions.Add(assignment);
             }
 
+            assignmentExpressions.Add(destParam);
+
             return Expression.Block(blockParameters, assignmentExpressions);
         }
 
@@ -69,16 +81,18 @@ namespace ExplicitMapper
             var destListType = typeof(List<>).MakeGenericType(destType);
             var sourceCollection = Expression.Variable(sourceCollectionType, "sourceCollection");
             var destList = Expression.Variable(destListType, "destList");
+
+            var lengthVariable = Expression.Variable(typeof(int), "length");
+            var getLengthExpression = BuildLengthCalculationExpression(sourceParam, sourceType, lengthVariable);
+
+            var createDestExpression = Expression.Assign(destList, Expression.New(destListType.GetConstructor(new[] { typeof(int) }), lengthVariable));
+
+            assignmentExpressions.Add(getLengthExpression);
+            assignmentExpressions.Add(createDestExpression);
+
             var sourceParamConsersion = Expression.Assign(sourceCollection, Expression.Convert(sourceParam, sourceCollectionType));
-            var destParamConversion = Expression.Assign(destList, Expression.Convert(destParam, destListType));
 
             assignmentExpressions.Add(sourceParamConsersion);
-            assignmentExpressions.Add(destParamConversion);
-
-            if (!destType.GetConstructors().Any(c => c.GetParameters().Length == 0))
-            {
-                throw new ExplicitMapperException($"No default constructor for type {destType} exists");
-            }
 
             var sourceItemVariable = Expression.Variable(sourceType, "sourceItem");
             var destItemVariable = Expression.Variable(destType, "destItem");
@@ -94,8 +108,8 @@ namespace ExplicitMapper
             var loopBlock = Expression.Block(new[] { destItemVariable },
                 destItemNewAssignmentExpression, mapExpression, itemAssignmentExpression, indexIncrementExpression);
 
-            var mapFromArrayExpression = MapFromArray(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock);
-            var mapFromListExpression = MapFromList(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock);
+            var mapFromArrayExpression = MapFromArray(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock, lengthVariable);
+            var mapFromListExpression = MapFromList(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock, lengthVariable);
             var mapFromEnumerableExpression = MapFromEnumerable(sourceType, sourceCollection, sourceItemVariable, loopBlock);
 
             var mapMethodSelectionExpression = Expression.IfThenElse(
@@ -111,7 +125,7 @@ namespace ExplicitMapper
             assignmentExpressions.Add(mapMethodSelectionExpression);
             assignmentExpressions.Add(destList);
 
-            return Expression.Block(new[] { indexVariable, sourceCollection, destList }, assignmentExpressions);
+            return Expression.Block(new[] { lengthVariable, indexVariable, sourceCollection, destList }, assignmentExpressions);
         }
 
         internal static Expression BuildMapToArrayExpression(
@@ -127,16 +141,18 @@ namespace ExplicitMapper
             var destArrayType = destType.MakeArrayType();
             var sourceCollection = Expression.Variable(sourceCollectionType, "sourceCollection");
             var destArray = Expression.Variable(destArrayType, "destArray");
+
+            var lengthVariable = Expression.Variable(typeof(int), "length");
+            var getLengthExpression = BuildLengthCalculationExpression(sourceParam, sourceType, lengthVariable);
+
+            var createDestExpression = Expression.Assign(destArray, Expression.New(destArrayType.GetConstructor(new[] { typeof(int) }), lengthVariable));
+
+            assignmentExpressions.Add(getLengthExpression);
+            assignmentExpressions.Add(createDestExpression);
+
             var sourceParamConsersion = Expression.Assign(sourceCollection, Expression.Convert(sourceParam, sourceCollectionType));
-            var destParamConversion = Expression.Assign(destArray, Expression.Convert(destParam, destArrayType));
 
             assignmentExpressions.Add(sourceParamConsersion);
-            assignmentExpressions.Add(destParamConversion);
-
-            if (!destType.GetConstructors().Any(c => c.GetParameters().Length == 0))
-            {
-                throw new ExplicitMapperException($"No default constructor for type {destType} exists");
-            }
 
             var sourceItemVariable = Expression.Variable(sourceType, "sourceItem");
             var destItemVariable = Expression.Variable(destType, "destItem");
@@ -153,8 +169,8 @@ namespace ExplicitMapper
                 new[] { destItemVariable },
                 destItemNewAssignmentExpression, mapExpression, itemAssignmentExpression, indexIncrementExpression);
 
-            var mapFromArrayExpression = MapFromArray(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock);
-            var mapFromListExpression = MapFromList(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock);
+            var mapFromArrayExpression = MapFromArray(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock, lengthVariable);
+            var mapFromListExpression = MapFromList(sourceType, sourceCollection, sourceItemVariable, indexVariable, loopBlock, lengthVariable);
             var mapFromEnumerableExpression = MapFromEnumerable(sourceType, sourceCollection, sourceItemVariable, loopBlock);
 
             var mapMethodSelectionExpression = Expression.IfThenElse(
@@ -170,21 +186,45 @@ namespace ExplicitMapper
             assignmentExpressions.Add(mapMethodSelectionExpression);
             assignmentExpressions.Add(destArray);
 
-            return Expression.Block(new[] { indexVariable, sourceCollection, destArray }, assignmentExpressions);
+            return Expression.Block(new[] { lengthVariable, indexVariable, sourceCollection, destArray }, assignmentExpressions);
         }
 
-        private static Expression MapFromArray(Type sourceType, Expression collection, ParameterExpression loopVariable, ParameterExpression indexVariable, Expression loopContent)
+        private static Expression BuildLengthCalculationExpression(ParameterExpression sourceParam, Type sourceType, ParameterExpression lengthVariable)
+        {
+            var arrayType = sourceType.MakeArrayType();
+            var listType = typeof(List<>).MakeGenericType(sourceType);
+            var collectionType = typeof(ICollection<>).MakeGenericType(sourceType);
+            return Expression.IfThenElse(
+                Expression.TypeIs(sourceParam, arrayType),
+                Expression.Assign(lengthVariable, Expression.ArrayLength(Expression.Convert(sourceParam, arrayType))),
+                Expression.IfThenElse(
+                    Expression.TypeIs(sourceParam, listType),
+                    Expression.Assign(
+                        lengthVariable,
+                        Expression.Call(
+                            Expression.Convert(sourceParam, listType),
+                            listType.GetProperty(nameof(IList.Count)).GetGetMethod())
+                        ),
+                    Expression.Assign(lengthVariable,
+                        Expression.Call(
+                            Expression.Convert(sourceParam, collectionType),
+                            collectionType.GetProperty(nameof(ICollection.Count)).GetGetMethod())
+                        )
+                )
+            );
+        }
+
+        private static Expression MapFromArray(
+            Type sourceType, Expression collection, ParameterExpression loopVariable,
+            ParameterExpression indexVariable, Expression loopContent, ParameterExpression arraySizeVariable)
         {
             var breakLabel = Expression.Label("LoopBreak");
             var arrayType = sourceType.MakeArrayType();
             var sourceArrayVariable = Expression.Variable(arrayType, "sourceArray");
-            var arraySizeVariable = Expression.Variable(typeof(int), "arraySize");
             var sourceArrayAccessExpression = Expression.ArrayAccess(sourceArrayVariable, indexVariable);
-            var getLengthExpression = Expression.ArrayLength(sourceArrayVariable);
 
-            var loop = Expression.Block(new[] { sourceArrayVariable, arraySizeVariable },
+            var loop = Expression.Block(new[] { sourceArrayVariable },
                 Expression.Assign(sourceArrayVariable, Expression.Convert(collection, arrayType)),
-                Expression.Assign(arraySizeVariable, getLengthExpression),
                 Expression.Loop(
                     Expression.IfThenElse(
                         Expression.LessThan(indexVariable, arraySizeVariable),
@@ -200,18 +240,17 @@ namespace ExplicitMapper
             return loop;
         }
 
-        private static Expression MapFromList(Type sourceType, Expression collection, ParameterExpression loopVariable, ParameterExpression indexVariable, Expression loopContent)
+        private static Expression MapFromList(
+            Type sourceType, Expression collection, ParameterExpression loopVariable,
+            ParameterExpression indexVariable, Expression loopContent, ParameterExpression listSizeVariable)
         {
             var breakLabel = Expression.Label("LoopBreak");
             var listType = typeof(List<>).MakeGenericType(sourceType);
             var sourceListVariable = Expression.Variable(listType, "sourceList");
-            var listSizeVariable = Expression.Variable(typeof(int), "listSize");
-            var getLengthMethod = Expression.Call(sourceListVariable, listType.GetProperty(nameof(IList.Count)).GetGetMethod());
             var indexExpression = Expression.MakeIndex(sourceListVariable, listType.GetProperty("Item"), new[] { indexVariable });
 
-            var loop = Expression.Block(new[] { sourceListVariable, listSizeVariable },
+            var loop = Expression.Block(new[] { sourceListVariable },
                 Expression.Assign(sourceListVariable, Expression.Convert(collection, listType)),
-                Expression.Assign(listSizeVariable, getLengthMethod),
                 Expression.Loop(
                     Expression.IfThenElse(
                         Expression.LessThan(indexVariable, listSizeVariable),

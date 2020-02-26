@@ -8,11 +8,11 @@ namespace ExplicitMapper
     public class MappingConfiguration
     {
         private static List<RawMapping> _rawMappings = new List<RawMapping>();
-        private static Dictionary<(Type source, Type dest), Action<object, object>> _projectionExpressions;
-        private static Dictionary<(Type source, Type dest), Action<object, object>> _mapExpressions;
+        private static Dictionary<(Type source, Type dest), Func<object, object, object>> _projectionExpressions;
+        private static Dictionary<(Type source, Type dest), Func<object, object, object>> _mapExpressions;
 
-        internal static IReadOnlyDictionary<(Type source, Type dest), Action<object, object>> ProjectionExpressions => _projectionExpressions;
-        internal static IReadOnlyDictionary<(Type source, Type dest), Action<object, object>> MapExpressions => _mapExpressions;
+        internal static IReadOnlyDictionary<(Type source, Type dest), Func<object, object, object>> ProjectionExpressions => _projectionExpressions;
+        internal static IReadOnlyDictionary<(Type source, Type dest), Func<object, object, object>> MapExpressions => _mapExpressions;
 
         protected TDest Map<TDest>(object source)
         {
@@ -59,13 +59,13 @@ namespace ExplicitMapper
         {
             if (_rawMappings == null)
             {
-                _projectionExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(0);
-                _mapExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(0);
+                _projectionExpressions = new Dictionary<(Type source, Type dest), Func<object, object, object>>(0);
+                _mapExpressions = new Dictionary<(Type source, Type dest), Func<object, object, object>>(0);
                 return;
             }
 
-            _projectionExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(_rawMappings.Count);
-            _mapExpressions = new Dictionary<(Type source, Type dest), Action<object, object>>(_rawMappings.Count);
+            _projectionExpressions = new Dictionary<(Type source, Type dest), Func<object, object, object>>(_rawMappings.Count);
+            _mapExpressions = new Dictionary<(Type source, Type dest), Func<object, object, object>>(_rawMappings.Count);
 
             foreach (var mapping in _rawMappings)
             {
@@ -84,21 +84,21 @@ namespace ExplicitMapper
 
                 var mappingExpressions = GetMappingExpressions(mapping);
                 var mapExpression = MapExpressionBuilder.BuildMapExpression(sourceParam, destParam, mapping.SourceType, mapping.DestType, mappingExpressions);
-                var mapLambda = Expression.Lambda(typeof(Action<object, object>), mapExpression, sourceParam, destParam);
-                _mapExpressions.Add((mapping.SourceType, mapping.DestType), (Action<object, object>)mapLambda.Compile());
+                var mapLambda = Expression.Lambda(typeof(Func<object, object, object>), mapExpression, sourceParam, destParam);
+                _mapExpressions.Add((mapping.SourceType, mapping.DestType), (Func<object, object, object>)mapLambda.Compile());
 
                 if (!mapping.DestType.IsAbstract)
                 {
                     var sourceCollectionType = typeof(ICollection<>).MakeGenericType(mapping.SourceType);
                     var destListType = typeof(List<>).MakeGenericType(mapping.DestType);
                     var mapListExpression = MapExpressionBuilder.BuildMapToListExpression(sourceParam, destParam, mapping.SourceType, mapping.DestType, mappingExpressions);
-                    var mapListLambda = Expression.Lambda(typeof(Action<object, object>), mapListExpression, sourceParam, destParam);
-                    _mapExpressions.Add((sourceCollectionType, destListType), (Action<object, object>)mapListLambda.Compile());
+                    var mapListLambda = Expression.Lambda(typeof(Func<object, object, object>), mapListExpression, sourceParam, destParam);
+                    _mapExpressions.Add((sourceCollectionType, destListType), (Func<object, object, object>)mapListLambda.Compile());
 
                     var destArrayType = mapping.DestType.MakeArrayType();
                     var mapArrayExpression = MapExpressionBuilder.BuildMapToArrayExpression(sourceParam, destParam, mapping.SourceType, mapping.DestType, mappingExpressions);
-                    var mapArrayLambda = Expression.Lambda(typeof(Action<object, object>), mapArrayExpression, sourceParam, destParam);
-                    _mapExpressions.Add((sourceCollectionType, destArrayType), (Action<object, object>)mapArrayLambda.Compile());
+                    var mapArrayLambda = Expression.Lambda(typeof(Func<object, object, object>), mapArrayExpression, sourceParam, destParam);
+                    _mapExpressions.Add((sourceCollectionType, destArrayType), (Func<object, object, object>)mapArrayLambda.Compile());
                 }
             }
 
